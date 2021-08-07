@@ -1,40 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux'; //import the 'connect' method from react-redux to connect component to redux store
 import CardList from  '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import Scroll from '../components/Scroll';
 import './App.css';
 
+import { requestRobots, setSearchField } from '../actions'; // import actions for Redux
 
-const App = () =>{
-    const [searchfield, updateSearchfield] = useState("")
-    const [ robots, setRobots ] = useState([])
+const mapStateToProps = state => {
+    return {
+        searchField : state.searchRobots.searchField,
+        robots: state.requestRobots.robots,
+        isPending: state.requestRobots.isPending,
+        error: state.requestRobots.error,
+    }
+}
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+        onRequestRobots: () => dispatch(requestRobots())
+    }
+}
+
+const App = (props) =>{
+
     useEffect(() => {
-        fetch('https://jsonplaceholder.typicode.com/users')
-            .then(response => response.json())
-            .then(users => setRobots(users))
+        props.onRequestRobots()
     },[])
 
-    const onSearchChange = (event) => {
-        updateSearchfield(event.target.value)
-    }
+    const { searchField, onSearchChange, robots, isPending } = props
 
     const filteredRobots = robots.filter(robot =>{
-        return robot.name.toLowerCase().includes(searchfield.toLowerCase());
+        return robot.name.toLowerCase().includes(searchField.toLowerCase());
     })
 
-    return !robots.length ?
+    return isPending ?
     <h1>Loading...</h1> :
     (
         <div className="tc">
-            <h1>Robofriends</h1>
-            <SearchBox searchChange={onSearchChange}/>
+            <h1 className='f1'>Robofriends</h1>
+            <SearchBox searchChange={onSearchChange} />
             <Scroll>
-                <CardList robots={filteredRobots}/>
+                <CardList robots={filteredRobots} />
             </Scroll>
         </div>
     );
 }
 
 
-
-export default App;
+//connect() is a higher-order function [a function that returns another function,
+// meaning it returns another function which runs and passes (App) as parameters]
+// "mapStateToProps" and "mapDispatchToProps" are the react standards for these names but can be changed to anything
+export default connect(mapStateToProps, mapDispatchToProps)(App);
